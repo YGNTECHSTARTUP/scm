@@ -31,7 +31,8 @@ export const dealer = pgTable("dealer", {
   contact: varchar("contact", { length: 20 }),
   documentId: integer("document_id")
     .references(() => document.id),  
-   jwttoken: varchar("jwttoken", { length: 200 }),      // nullable FK
+   jwttoken: varchar("jwttoken", { length: 200 }),  
+   passWord: varchar("password", { length: 200 }),    // nullable FK
 });
 
 export const dealerRelations = relations(dealer, ({ many }) => ({
@@ -52,13 +53,14 @@ export const marketer = pgTable("marketer", {
   contact: varchar("contact", { length: 20 }),
 
   documentsId: integer("documents_id")
-    .references(() => document.id),        // nullable
+    .references(() => document.id),        
 
-  warehousesId: integer("warehouses_id"),  // unclear purpose but included
-  salesIds: integer("sales_ids"),          // unclear purpose but included
+  warehousesId: integer("warehouses_id"), 
+  salesIds: integer("sales_ids"),          
 
   rating: integer("rating"),   
-   jwttoken: varchar("jwttoken", { length: 200 }),            // optional rating ref
+   jwtToken: varchar("jwttoken", { length: 200 }),
+   passWord: varchar("password", { length: 200 }),          // optional rating ref
 });
 
 export const marketerRelations = relations(marketer, ({ one, many }) => ({

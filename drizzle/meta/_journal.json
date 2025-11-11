@@ -15,6 +15,13 @@
       "when": 1762857138499,
       "tag": "0001_acoustic_pixie",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762858966338,
+      "tag": "0002_brown_cassandra_nova",
+      "breakpoints": true
     }
   ]
 }
