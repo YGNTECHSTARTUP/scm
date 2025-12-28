@@ -28,7 +28,7 @@ export const document = pgTable("document", {
 export const dealer = pgTable("dealer", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
-  contact: varchar("contact", { length: 20 }),
+  contact: varchar("contact", { length: 20 }).unique(),
   documentId: integer("document_id")
     .references(() => document.id),  
    jwttoken: varchar("jwttoken", { length: 200 }),  

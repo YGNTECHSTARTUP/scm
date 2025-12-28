@@ -1,16 +1,27 @@
 import { Hono } from "hono";
 import dealerAuth from "./routes/dealerAuth";
+import documentRoute from "./routes/documentUpload";
 
-import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 
 import marketerAuth from "./routes/marketerAuth";
 import { verifyDealerToken, verifyMarketerToken } from "./middleware/authmiddleware";
+import dealerCrud from "./routes/dealerCrud";
+import markerterCrud from "./routes/marketerCrud";
+import warehouseCrud from "./routes/warehouseCrud";
+import salesCrud from "./routes/salesCrud";
 
 const app = new Hono();
 
 // Public routes
 app.route("/api/dealer", dealerAuth);
 app.route("/api/marketer", marketerAuth);
+
+//protected routes
+app.route("/api/dealers",dealerCrud);
+app.route('/api/marketers',markerterCrud);
+app.route('/api/warehouses',warehouseCrud);
+app.route('/api/sales',salesCrud)
+app.route('/api/documents',documentRoute);
 
 // Protected examples
 app.get("/api/dealer/profile", verifyDealerToken, (c) => {
