@@ -1,5 +1,6 @@
-import 'dotenv/config';
-import { defineConfig } from 'drizzle-kit';
+import {defineConfig} from "drizzle-kit"
+import { config} from 'dotenv';
+config({path:".dev.vars"})
 
 export default defineConfig({
   out: './drizzle',
