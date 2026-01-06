@@ -3,14 +3,31 @@
 
 import { Hono } from "hono";
 import { db } from "../../drizzle/src";
-import { dealer, marketer ,warehouse,sale} from "../db/schema";
+import { dealer, marketer ,warehouse,sale,driver} from "../db/schema";
 import { eq } from "drizzle-orm";
-import { verifyDealerToken,} from "../middleware/authmiddleware";
+import { verifyDealerToken, verifyMarketerToken,} from "../middleware/authmiddleware";
 import bcrypt from "bcryptjs";
 import{z} from "zod";
 
  const markerterCrud=new Hono();
 
+markerterCrud.get("/get/:marketerId/drivers", async (c) => {
+  const marketerId = Number(c.req.param("marketerId"));
+
+  const drivers = await db
+    .select({
+      id: driver.id,
+      fullName: driver.fullName,
+      phoneNumber: driver.phoneNumber,
+      vehicleType: driver.vehicleType,
+      vehicleNumber: driver.vehicleNumber,
+      status: driver.status,
+    })
+    .from(driver)
+    .where(eq(driver.marketerId, marketerId));
+
+  return c.json(drivers);
+});
 
  //protected by dealer token
  markerterCrud.use('*',verifyDealerToken)
@@ -144,6 +161,7 @@ if (!existing || existing.dealerId !== dealer.id) {
     }
     return c.json({message:"Mareketer deleted",id})
  })
+
 
 
  export default markerterCrud;

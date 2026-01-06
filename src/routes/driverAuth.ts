@@ -1,19 +1,17 @@
 // routes/driver.ts
 import { Hono } from "hono";
 import { db } from "../../drizzle/src/index";
-import { driver } from "../db/schema";
+import { driver, marketer, warehouse } from "../db/schema";
 import { eq } from "drizzle-orm";
-// import bcrypt from "bcrypt";
 import bcrypt from "bcryptjs";
-import { createToken} from "../utils/jwt";
+import { createToken } from "../utils/jwt";
 import { setCookie, getCookie, deleteCookie } from "hono/cookie";
-// import {verify}
+import { verifyDriverToken } from "../middleware/authmiddleware";
 
-// import { Context } from "hono/jsx";
-// const COOKIE_MAX_AGE
 const driverAuth = new Hono();
 driverAuth.post("/register", async (c) => {
   const {
+    marketerId,
     fullName,
     phoneNumber,
     vehicleType,
@@ -22,9 +20,14 @@ driverAuth.post("/register", async (c) => {
     password,
   } = await c.req.json();
 
+  if (!marketerId) {
+    return c.json({ message: "marketerId is required" }, 400);
+  }
+
   const hashed = await bcrypt.hash(password, 10);
 
   await db.insert(driver).values({
+    marketerId, // ✅ NEW
     fullName,
     phoneNumber,
     vehicleType,
@@ -79,6 +82,7 @@ driverAuth.post("/login", async (c) => {
         id: user.id,
         fullName: user.fullName,
         phoneNumber: user.phoneNumber,
+        marketerId: user.marketerId, // ✅ useful on frontend
       },
     });
   } catch (err) {
@@ -86,9 +90,6 @@ driverAuth.post("/login", async (c) => {
     return c.json({ message: "Server error" }, 500);
   }
 });
-
-// import { deleteCookie, getCookie } from "hono/cookie";
-
 driverAuth.post("/logout", async (c) => {
   const token = getCookie(c, "driver_token");
   if (!token) return c.json({ message: "No active session" });
@@ -102,13 +103,33 @@ driverAuth.post("/logout", async (c) => {
 
   return c.json({ message: "Driver logged out successfully" });
 });
+driverAuth.get(
+  "/:id/warehouses",
+  verifyDriverToken,
+  async (c) => {
+    const driverId = Number(c.req.param("id"));
+    const loggedIn = (c.req as any).user;
 
-// driverAuth.get(
-//   "/warehouses",
-//   verifyDriverToken,
-//   async (c) => {
-//     const driver = (c.req as any).user;
-//     return c.json({ driverId: driver.id });
-//   }
-// );
+    // 🔒 Security check
+    if (loggedIn.id !== driverId) {
+      return c.json({ message: "Forbidden" }, 403);
+    }
+
+    const result = await db
+      .select({
+        id: warehouse.id,
+        address: warehouse.address,
+        geoPoint: warehouse.geoPoint,
+        ownerName: warehouse.ownerName,
+        contact: warehouse.contact,
+        quantity: warehouse.quantity,
+      })
+      .from(driver)
+      .innerJoin(marketer, eq(driver.marketerId, marketer.id))
+      .innerJoin(warehouse, eq(marketer.id, warehouse.marketerId))
+      .where(eq(driver.id, driverId));
+
+    return c.json(result);
+  }
+);
 export default driverAuth;

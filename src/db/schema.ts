@@ -70,6 +70,7 @@ export const marketerRelations = relations(marketer, ({ one, many }) => ({
     references: [dealer.id],
   }),
   warehouses: many(warehouse),
+  drivers: many(driver),
 }));
 
 // ----------------------------------------
@@ -142,6 +143,10 @@ export const driverStatusEnum = pgEnum("driver_status", [
 export const driver = pgTable("driver", {
   id: serial("id").primaryKey(),
 
+  marketerId: integer("marketer_id")
+    .references(() => marketer.id)
+    .notNull(),
+
   fullName: varchar("full_name", { length: 100 }).notNull(),
 
   phoneNumber: varchar("phone_number", { length: 20 })
@@ -162,6 +167,14 @@ export const driver = pgTable("driver", {
 
   jwtToken: varchar("jwt_token", { length: 300 }),
 });
+
+export const driverRelations = relations(driver, ({ one }) => ({
+  marketer: one(marketer, {
+    fields: [driver.marketerId],
+    references: [marketer.id],
+  }),
+}));
+
 
 
 export * from '../../drizzle/src/db/schema';

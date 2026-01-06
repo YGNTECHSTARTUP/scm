@@ -34,8 +34,10 @@ driverRoutes.get("/:id", verifyDriverToken, async (c) => {
     vehicleNumber: data.vehicleNumber,
     licenseIdentifier: data.licenseIdentifier,
     status: data.status,
+    marketerId: data.marketerId, // ✅ useful
   });
 });
+
 driverRoutes.put("/:id", verifyDriverToken, async (c) => {
   const paramId = Number(c.req.param("id"));
   const loggedInUser = (c.req as any).user;
@@ -50,7 +52,7 @@ driverRoutes.put("/:id", verifyDriverToken, async (c) => {
     .set({
       vehicleType: body.vehicleType,
       vehicleNumber: body.vehicleNumber,
-      status: body.status,
+      // ❌ status removed (admin only)
     })
     .where(eq(driver.id, paramId))
     .returning();
@@ -61,6 +63,7 @@ driverRoutes.put("/:id", verifyDriverToken, async (c) => {
 
   return c.json(updated);
 });
+
 driverRoutes.delete("/:id", verifyDriverToken, async (c) => {
   const paramId = Number(c.req.param("id"));
   const loggedInUser = (c.req as any).user;
@@ -73,5 +76,31 @@ driverRoutes.delete("/:id", verifyDriverToken, async (c) => {
 
   return c.json({ message: "Driver deleted successfully" });
 });
+
+driverRoutes.get("/:id/warehouses", verifyDriverToken, async (c) => {
+  const driverId = Number(c.req.param("id"));
+  const loggedIn = (c.req as any).user;
+
+  if (loggedIn.id !== driverId) {
+    return c.json({ message: "Forbidden" }, 403);
+  }
+
+  const result = await db
+    .select({
+      id: warehouse.id,
+      address: warehouse.address,
+      geoPoint: warehouse.geoPoint,
+      ownerName: warehouse.ownerName,
+      contact: warehouse.contact,
+      quantity: warehouse.quantity,
+    })
+    .from(driver)
+    .innerJoin(marketer, eq(driver.marketerId, marketer.id))
+    .innerJoin(warehouse, eq(marketer.id, warehouse.marketerId))
+    .where(eq(driver.id, driverId));
+
+  return c.json(result);
+});
+
 
 export default driverRoutes;
