@@ -1,6 +1,6 @@
 import { Context, Next } from "hono";
 import { db } from "../../drizzle/src/index";
-import { dealer, marketer } from "../db/schema";
+import { dealer, marketer,driver } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { createToken, verifyToken } from "../utils/jwt";
 import { setCookie, getCookie } from "hono/cookie";
@@ -53,6 +53,45 @@ export async function verifyMarketerToken(c: Context, next: Next) {
     await db.update(marketer).set({ jwtToken: newToken }).where(eq(marketer.id, user.id));
 
     setCookie(c, "marketer_token", newToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+      path: "/",
+      maxAge: COOKIE_MAX_AGE,
+    });
+
+    (c.req as any).user = user;
+    await next();
+  } catch (err) {
+    console.error(err);
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+}
+export async function verifyDriverToken(c: Context, next: Next) {
+  try {
+    const token = getCookie(c, "driver_token");
+    if (!token) return c.json({ message: "Unauthorized" }, 401);
+
+    const payload = await verifyToken(token);
+
+    const [user] = await db
+      .select()
+      .from(driver)
+      .where(eq(driver.id, Number(payload.userId)));
+
+    if (!user || user.jwtToken !== token) {
+      return c.json({ message: "Invalid or expired token" }, 403);
+    }
+
+    // 🔄 Rolling session (refresh token)
+    const newToken = await createToken({ userId: user.id });
+
+    await db
+      .update(driver)
+      .set({ jwtToken: newToken })
+      .where(eq(driver.id, user.id));
+
+    setCookie(c, "driver_token", newToken, {
       httpOnly: true,
       secure: true,
       sameSite: "Strict",

@@ -8,6 +8,7 @@ import {
   jsonb,
   boolean,
   text,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -128,6 +129,38 @@ export const rating = pgTable("rating", {
   entityType: varchar("entity_type", { length: 40 }).notNull(),   // dealer/marketer/warehouse
   score: integer("score").notNull(),
   computedAt: timestamp("computed_at").defaultNow(),
+});
+export const driverStatusEnum = pgEnum("driver_status", [
+  "PENDING",
+  "ACTIVE",
+  "BLOCKED",
+]);
+
+/**
+ * Driver table
+ */
+export const driver = pgTable("driver", {
+  id: serial("id").primaryKey(),
+
+  fullName: varchar("full_name", { length: 100 }).notNull(),
+
+  phoneNumber: varchar("phone_number", { length: 20 })
+    .notNull()
+    .unique(),
+
+  vehicleType: varchar("vehicle_type", { length: 50 }).notNull(),
+
+  vehicleNumber: varchar("vehicle_number", { length: 50 }).notNull(),
+
+  licenseIdentifier: varchar("license_identifier", { length: 50 }).notNull(),
+
+  status: driverStatusEnum("status")
+    .default("PENDING")
+    .notNull(),
+
+  password: varchar("password", { length: 200 }).notNull(),
+
+  jwtToken: varchar("jwt_token", { length: 300 }),
 });
 
 

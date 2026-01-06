@@ -9,7 +9,8 @@ import dealerCrud from "./routes/dealerCrud";
 import markerterCrud from "./routes/marketerCrud";
 import warehouseCrud from "./routes/warehouseCrud";
 import salesCrud from "./routes/salesCrud";
-
+import driverAuth from "./routes/driverAuth";
+import driverRoutes from "./routes/driverRoutes";
 const app = new Hono();
 
 // Public routes
@@ -22,6 +23,8 @@ app.route('/api/marketers',markerterCrud);
 app.route('/api/warehouses',warehouseCrud);
 app.route('/api/sales',salesCrud)
 app.route('/api/documents',documentRoute);
+app.route('/api/driverAuth',driverAuth);
+app.route('/api/driverRoutes',driverRoutes);
 
 // Protected examples
 app.get("/api/dealer/profile", verifyDealerToken, (c) => {
